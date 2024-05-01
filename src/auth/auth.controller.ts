@@ -14,7 +14,7 @@ export class AuthController {
 
   @MessagePattern('auth.login.user')
   loginUser(@Payload() loginUserDto: LoginUserDto) {
-    return this.authService.loginUser();
+    return this.authService.loginUser(loginUserDto);
   }
 
   @MessagePattern('auth.verify.token')

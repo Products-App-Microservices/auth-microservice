@@ -3,7 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-import { RegisterUserDto } from './dtos';
+import { LoginUserDto, RegisterUserDto } from './dtos';
 
 @Injectable()
 export class AuthService extends PrismaClient implements OnModuleInit {
@@ -52,8 +52,44 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  async loginUser() {
-    return 'Login user';
+  async loginUser( loginUserDto: LoginUserDto ) {
+    const { email, password } = loginUserDto;
+
+    try {
+      const user = await this.user.findFirst({
+        where: { email }
+      });
+  
+      if (!user) {
+        throw new RpcException({
+          status: HttpStatus.UNAUTHORIZED,
+          message: 'Invalid credentials',
+        });
+      }
+  
+      const isValidPassword = bcrypt.compareSync( password, user.password );
+  
+      if (!isValidPassword) {
+        throw new RpcException({
+          status: HttpStatus.UNAUTHORIZED,
+          message: 'Invalid credentials',
+        });
+      }
+  
+      const { password: __, ...rest } = user;
+  
+      return {
+        ...rest,
+        token: 'ABC',
+      }
+    } catch (error) {
+      throw new RpcException({
+        status: 400,
+        message: error.message,
+      })
+    }
+
+
   }
 
   async verifyToken() {
